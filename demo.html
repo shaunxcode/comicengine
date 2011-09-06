@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Path Comics</title>
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css" type="text/css" media="all" />
+       	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+       	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="sketch.js"></script>
+		<script>
+			var CC ={};
+						
+			$(function() {
+				CC.frames = {};
+				
+				CC.scrollTo = function(parent, child) {
+					parent.animate({
+						left: parent.position().left - (child.offset().left - 550),
+						top: parent.position().top - (child.offset().top -550)})
+
+				};
+				
+				CC.frameId = 0;
+				
+				CC.newFrame = function(strip, prepend) {
+					var id = CC.frameId++;
+					var frame =  $('<img />')
+						.attr('id', 'frame_' + id)
+						.addClass('Frame')
+						.hover(function(){
+							$('.frame').removeClass('ActiveFrame');
+							$('.FrameTools').remove();
+							$(this).addClass('ActiveFrame');
+							
+							var tools = $('<div />').addClass('FrameTools'); 
+
+							tools.append(
+								$('<button />').text('+').button().css('float', 'left').click(function(){
+									CC.newFrame(strip, true);
+								})); 
+								
+							tools.append(
+								$('<button />').text('e').button().click(function() {
+									
+									var sketchTools = $('<div />').addClass('SketchTools');
+									$.each(['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#000', '#fff'], function() {
+										sketchTools.append("<a href='#frame_sketch_" + id + "' data-color='" + this + "' style='width: 10px; height: 10px; background: " + this + ";'>&nbsp;</a> ");
+								    });
+								
+								    $.each([1, 2, 3, 5, 10, 15], function() {
+										sketchTools.append("<a href='#frame_sketch_" + id + "' data-size='" + this + "' style='background: #ccc'>" + this + "</a> ");
+								    });
+								
+									$('<div />')
+										.append(sketchTools, $('<canvas />').attr({width: 600, height: 600, 'id': 'frame_sketch_' + id}))
+										.dialog({
+											title: 'Edit Frame',
+											modal: true, 
+											width: 1200, 
+											height: 800,
+											resizable: false,
+											close: function() {
+												$(this).remove();
+											},
+											open: function() {
+												$('#frame_sketch_' + id).sketch();
+												if(frame.data('actions')) {
+													$('#frame_sketch_' + id).sketch('actions', frame.data('actions'));
+ 													$('#frame_sketch_' + id).sketch('redraw');
+												}		
+											},
+											buttons: {
+												Cancel: function() {
+													$(this).dialog('close');
+												}, 
+												Save: function() {
+													frame
+														.attr('src', document.getElementById('frame_sketch_' + id).toDataURL('png'))
+														.data('actions', $('#frame_sketch_' + id).sketch('actions'));
+													$(this).dialog('close');
+												}
+											}});
+											
+
+
+								}));
+
+							tools.append(
+								$('<button />').text('c').button());
+								
+							tools.append(
+								$('<button />').text('x').button().click(function(){
+									frame.parent().remove();
+							}));
+							
+							tools.append($('<button />').text('+').button().css('float', 'right' ).click(function(){
+								CC.newFrame(strip);
+							}));
+							
+							$(this).parent().append(tools);
+						});
+					
+					strip.css('width', strip.width() + 250 + 10 + 2);
+					$('ul', strip)[prepend ? 'prepend' : 'append']($('<li />').append(frame));
+				//	CC.scrollTo($('#workspace'), frame);
+					frame.click();
+				};
+
+
+				$('#workspace').draggable();
+								
+				$('#newStripButton').button().click(function() {
+					var strip = $('<div />')
+						.addClass('Strip')
+						.draggable()
+						.css({
+							top: -$('#workspace').position().top + 260, 
+							left: -$('#workspace').position().left + 75
+						})
+						.append(
+							$('<div />').append($('<input />').addClass('StripTitle').val('Title of Strip')),
+							$('<ul />'));
+							
+					$('#workspace').append(strip);
+					
+					CC.newFrame(strip);
+					
+				}).click();
+				
+				$('#previewButton').button();
+			})
+		</script>
+		<style>
+			body { font-family: helvetica; }
+			#workspace { left: -5000px; top: -5000px; width: 10000px; height: 10000px; cursor: move; background-image: url('grid.jpg'); }
+			.Strip { position: absolute; height: 355px; width: 0px;  background: #efefef; border: 1px solid #333; border-radius: 5px; }
+			.Frame { display: block; width: 250px; height: 250px; border: 1px solid #ccc; border-radius: 5px; background: #fff;}
+			.ActiveFrame { border: 1px solid #000;}
+
+			.Strip > ul { padding: 0; margin: 0; }
+			.Strip > ul > li { display: inline; float: left; margin-right: 5px; margin-left: 5px; margin-top: 5px;}
+			
+			.StripTitle { font-size: 2em; border-radius: 5px; border: 0; border-bottom: 1px solid #333; width: 100%;}
+			#toolbar { overflow: hidden; }
+			#newFrameButton { float: left; margin-right: 1em; }
+			#toolbar { position: fixed; top: 0; z-index: 666; background: #efefef; width: 100%; left: 0; opacity: 0.9; padding: 1em; border-bottom: 1px solid #ccc;}
+			#map { position: fixed; right: 0; bottom: 0; border-left: 1px solid #333; border-top: 1px solid #333; border-radius: 5px; width: 200px; height: 200px; background: #fff; opacity: 0.9;}
+
+			.FrameTools button { margin-right: 5px; font-size: .85em; margin-top: 5px; text-align: center;}
+			
+			canvas { border: 1px solid #333; margin-left: auto; margin-right: auto; position: relative; }
+			
+			.SketchTools a { text-decoration: none; padding: 5px; }
+			.SketchTools {margin-bottom: .5em; }
+		</style>
+	</head>
+	<body>
+		<div id="toolbar">
+			<button id="newStripButton">New Strip</button>
+			<button id="previewButton">Preview</button>
+		</div>
+		<div id="workspace"></div>
+		<div id="map"></div>
+	</body>
+</html>
