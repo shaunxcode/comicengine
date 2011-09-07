@@ -21,13 +21,13 @@
 				
 				CC.frameId = 0;
 				
-				CC.newFrame = function(strip, prepend) {
+				CC.newFrame = function(strip, activeFrame, prepend) {
 					var id = CC.frameId++;
 					var frame =  $('<img />')
 						.attr('id', 'frame_' + id)
 						.addClass('Frame')
 						.hover(function(){
-							$('.frame').removeClass('ActiveFrame');
+							$('.Frame').removeClass('ActiveFrame');
 							$('.FrameTools').remove();
 							$(this).addClass('ActiveFrame');
 							
@@ -35,11 +35,11 @@
 
 							tools.append(
 								$('<button />').text('+').button().css('float', 'left').click(function(){
-									CC.newFrame(strip, true);
+									CC.newFrame(strip, frame, true);
 								})); 
 								
 							tools.append(
-								$('<button />').text('e').button().click(function() {
+								$('<button />').text('edit frame').button().click(function() {
 									
 									var sketchTools = $('<div />').addClass('SketchTools');
 									$.each(['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#000', '#fff'], function() {
@@ -50,13 +50,109 @@
 										sketchTools.append("<a href='#frame_sketch_" + id + "' data-size='" + this + "' style='background: #ccc'>" + this + "</a> ");
 								    });
 								
+									var layers = $('<div />').addClass('LayersContainer');
+											
+									layers.bringToTop = function(layerId) {
+										$('.Layer', layers).css('zIndex', 10);
+										$(layerId, layers).css('zIndex', 11);
+									};
+									
+									var backgroundLayer = $('<div />')
+										.addClass('Layer BackgroundLayer')
+										.attr({id: 'tabs-background_layer'})
+										.append(
+											$('<canvas />').attr({width: 500, height: 500, 'id': 'frame_sketch_' + id}));
+									
+									var events = {
+										add: function(event) {
+											event.view.row = $('<tr />')
+												.append(
+													$('<td />').addClass('TypeCell').text(event.type),
+													$('<td />').addClass('XposCell').text(event.xpos),
+													$('<td />').addClass('YposCell').text(event.ypos),
+													$('<td />').addClass('WidthCell').text(event.width),
+													$('<td />').addClass('HeightCell').text(event.height),
+													$('<td />').addClass('DateCell').html($('<input />').attr('type', 'text')));
+											$('tbody', events.view).append(event.view.row);
+										},
+										
+										view: $('<table><thead><tr><th>type</th><th>x pos</th><th>y pos</th><th>width</th><th>height</th><th>value</th></thead><tbody></tbody></table>')
+									};
+									
+									var eventLayer = $('<div />')
+										.attr({id: 'tabs-events_layer'})
+										.addClass('Layer EventLayer')
+										.droppable({
+											accept: '.Asset',
+											drop: function(evt, ui) {
+												var x = Math.floor(ui.offset.left - eventLayer.offset().left);
+												var y = Math.floor(ui.offset.top - eventLayer.offset().top);
+												
+												var view = $('<div />')
+													.addClass('Event event-' + ui.draggable.data('type'))
+													.draggable({
+														containment: 'parent',
+														stop: function(evt, ui) {
+															$('.XposCell', view.row).text(Math.floor(ui.position.left));
+															$('.YposCell', view.row).text(Math.floor(ui.position.top));
+														}
+													})
+													.css({top: y, left: x})
+													.resizable({
+														stop: function() {
+															$('.WidthCell', view.row).text(view.width());
+															$('.HeightCell', view.row).text(view.height());
+														}
+													});
+													
+												eventLayer.append(view);
+												
+												events.add({
+													type: ui.draggable.data('type'), 
+													xpos: x, 
+													ypos: y, 
+													width: view.width(), 
+													height: view.height(), 
+													data: '', view: view});
+											}
+										})
+									
+									var asset = function(name) {
+										return $('<div />')
+											.addClass('Asset')
+											.text(name)
+											.data('type', name.toLowerCase())
+											.draggable({
+												revert: true, 
+												helper: 'clone'});
+									};
+									
+									var components = $('<div><ul><li><a href="#tabs-background">Background</a></li><li><a href="#tabs-events">Events</a></li><li><a href="#tabs-data">Data</a></li><li><a href="#tabs-characters">Characters</a></li><li><a href="#tabs-props">Props</a></li></ul></div>')
+										.addClass('Components')
+										.append($('<div />').attr({id: 'tabs-background'}).append(sketchTools))
+										.append($('<div />').attr({id: 'tabs-events'}).append(
+											$('<div />').addClass('Assets').append(
+												asset('Choice'),
+												asset('Click')),
+											events.view))
+										.append($('<div />').attr({id: 'tabs-data'}))
+										.append($('<div />').attr({id: 'tabs-characters'}))
+										.append($('<div />').attr({id: 'tabs-props'}))
+										.tabs({
+											select: function(evt, ui) {
+												layers.bringToTop($(ui.tab).attr('href') + '_layer');
+											}
+										}).tabs('select', 0); 
+									
+									layers.append(eventLayer, backgroundLayer);
+									
 									$('<div />')
-										.append(sketchTools, $('<canvas />').attr({width: 600, height: 600, 'id': 'frame_sketch_' + id}))
+										.append(components, layers)
 										.dialog({
 											title: 'Edit Frame',
 											modal: true, 
-											width: 1200, 
-											height: 800,
+											width: 1000, 
+											height: 610,
 											resizable: false,
 											close: function() {
 												$(this).remove();
@@ -79,84 +175,187 @@
 													$(this).dialog('close');
 												}
 											}});
-											
-
-
 								}));
-
-							tools.append(
-								$('<button />').text('c').button());
 								
 							tools.append(
 								$('<button />').text('x').button().click(function(){
 									frame.parent().remove();
+									strip.css('width', strip.width() - (250 + 10 + 2));
+									strip.updateMapNode();
 							}));
 							
 							tools.append($('<button />').text('+').button().css('float', 'right' ).click(function(){
-								CC.newFrame(strip);
+								CC.newFrame(strip, frame);
 							}));
 							
 							$(this).parent().append(tools);
 						});
 					
 					strip.css('width', strip.width() + 250 + 10 + 2);
-					$('ul', strip)[prepend ? 'prepend' : 'append']($('<li />').append(frame));
+					var newLi = $('<li />').append(frame);
+					if(activeFrame) {
+						activeFrame.parent()[prepend ? 'before' : 'after'](newLi);
+					} else {
+						$('ul', strip).prepend(newLi);
+					}
+					
+					strip.updateMapNode();
+					
 				//	CC.scrollTo($('#workspace'), frame);
 					frame.click();
 				};
-
-
-				$('#workspace').draggable();
 								
+				var map = $('#map');
+				
+				map.click(function(evt){
+					$(window).scrollLeft(0).scrollTop(0);
+					var left = evt.clientX - map.position().left;
+					var top = evt.clientY - map.position().top;
+					if(left + map.screen.width() > map.width()) {
+						left = map.width() - map.screen.width();
+					}
+					if(top + map.screen.height() > map.height()) {
+						top = map.height() - map.screen.height();
+					}
+					map.screen.animate({
+						top: top,
+						left: left
+					});
+					workspace.animate({
+						top: -map.scaleUp(top),
+						left: -map.scaleUp(left)
+					})
+				});
+				
+				map.scale = function(n) { 
+					var scaled = n * 0.02;
+					return scaled < 1 ? 1 : Math.ceil(scaled);	
+				};
+				
+				map.scaleUp = function(n) {
+					var scaled = n * 50;
+					return scaled; 	
+				}
+				
+				map.screen = $('<div />').addClass('MapScreen').appendTo(map).draggable({
+					containment: '#map',
+					drag: function(evt, ui) {
+						workspace.css({
+							top: -map.scaleUp(ui.position.top),
+							left: -map.scaleUp(ui.position.left) 
+						})
+					}
+				});
+				
+				map.drawScreen = function() {
+					var wspos = $('#workspace').position();
+					map.screen.css({
+						left: map.scale(-wspos.left + $(window).scrollLeft()),
+						top: map.scale(-wspos.top + $(window).scrollTop()), 
+						width: map.scale($(window).width()),
+						height: map.scale($(window).height()) 
+					});
+				};
+
+				var workspace = $('#workspace').draggable({drag: map.drawScreen});
+								
+				$(window).resize(map.drawScreen).resize();
+				
+				
+				var stripid = 0;
 				$('#newStripButton').button().click(function() {
+					var mapNode = $('<div />').addClass('MapNode');
+					map.append(mapNode);
+					
+					stripid++;
+					
 					var strip = $('<div />')
+						.attr({id: stripid})
 						.addClass('Strip')
-						.draggable()
+						.draggable({
+							snap: true, 
+							drag: function(){ 
+								strip.updateMapNode();
+							}, 
+							scroll: true
+						})
 						.css({
 							top: -$('#workspace').position().top + 260, 
 							left: -$('#workspace').position().left + 75
 						})
 						.append(
-							$('<div />').append($('<input />').addClass('StripTitle').val('Title of Strip')),
+							$('<div />').append($('<input />').addClass('StripTitle').val('Title' + stripid)),
 							$('<ul />'));
-							
+					
+					strip.updateMapNode = function() {
+						var pos = strip.position();
+						mapNode.css({
+							left: map.scale(pos.left), 
+							top: map.scale(pos.top),
+							width: map.scale(strip.width()),
+							height: map.scale(strip.height())
+						})
+					};
+					
 					$('#workspace').append(strip);
 					
 					CC.newFrame(strip);
 					
 				}).click();
 				
+				$(window).scrollTop(0).scrollLeft(0).scroll(map.drawScreen);
+				
 				$('#previewButton').button();
+				$('#shareButton').button();
 			})
 		</script>
 		<style>
+
+			.ui-widget { font-size: .8em; }
 			body { font-family: helvetica; }
 			#workspace { left: -5000px; top: -5000px; width: 10000px; height: 10000px; cursor: move; background-image: url('grid.jpg'); }
-			.Strip { position: absolute; height: 355px; width: 0px;  background: #efefef; border: 1px solid #333; border-radius: 5px; }
+			.Strip { position: absolute; height: 325px; width: 0px;  background: #efefef; border: 1px solid #333; border-radius: 5px; }
 			.Frame { display: block; width: 250px; height: 250px; border: 1px solid #ccc; border-radius: 5px; background: #fff;}
 			.ActiveFrame { border: 1px solid #000;}
 
 			.Strip > ul { padding: 0; margin: 0; }
 			.Strip > ul > li { display: inline; float: left; margin-right: 5px; margin-left: 5px; margin-top: 5px;}
 			
-			.StripTitle { font-size: 2em; border-radius: 5px; border: 0; border-bottom: 1px solid #333; width: 100%;}
+			.StripTitle { font-size: 1.1em; border-radius: 5px; border: 0; border-bottom: 1px solid #333; width: 100%;}
 			#toolbar { overflow: hidden; }
+			#toolbar input[type="text"] { width: 500px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; padding: 3px;}
 			#newFrameButton { float: left; margin-right: 1em; }
-			#toolbar { position: fixed; top: 0; z-index: 666; background: #efefef; width: 100%; left: 0; opacity: 0.9; padding: 1em; border-bottom: 1px solid #ccc;}
-			#map { position: fixed; right: 0; bottom: 0; border-left: 1px solid #333; border-top: 1px solid #333; border-radius: 5px; width: 200px; height: 200px; background: #fff; opacity: 0.9;}
-
+			#toolbar { position: fixed; top: 0; z-index: 666; background: #efefef; width: 100%; left: 0; opacity: 0.9; padding: 5px; border-bottom: 1px solid #ccc;}
+			#map { position: fixed; right: 50px; bottom: 50px; border: 1px solid #333; border-radius: 5px; width: 200px; height: 200px; background: #fff; opacity: 0.5;}
+			.MapScreen {background: #0000ff; opacity: 0.5; position: absolute; z-index: 50; cursor: move;}
+			.MapNode { background: #000; position: absolute; z-index: 30;}
+						
 			.FrameTools button { margin-right: 5px; font-size: .85em; margin-top: 5px; text-align: center;}
 			
-			canvas { border: 1px solid #333; margin-left: auto; margin-right: auto; position: relative; }
+			canvas { position: relative; background: #fff; opacity: 0.8}
 			
+			.LayersContainer { position: relative; width: 500px; height: 500px; border: 1px solid #AAA; border-radius: 5px; overflow: hidden;}
+			.Layer {position: absolute; width: 500px; height: 500px; left: 0px; top: 0px;}
+			.EventLayer { background: #fff; opacity: 0.7;}
 			.SketchTools a { text-decoration: none; padding: 5px; }
-			.SketchTools {margin-bottom: .5em; }
+			.Components {width: 450px; float: right; height: 495px; }
+			body { overflow: hidden; }
+
+			#tabs-events { overflow: hidden; }
+			#tabs-events table { display: block; }
+			#tabs-events table th { text-align: left; }
+			#tabs-events input[type="text"] { border: 1px solid #aaa; width: 150px; }
+			.Assets { overflow: hidden; }
+			.Asset { cursor: move; padding: 5px; border: 1px solid #9999cc; z-index: 12; float: left; margin-right: 5px;  }
+			.Event { position: absolute; border: 1px solid #9999cc; padding: 5px; width: 50px; height: 25px; }
 		</style>
 	</head>
 	<body>
 		<div id="toolbar">
 			<button id="newStripButton">New Strip</button>
 			<button id="previewButton">Preview</button>
+			<button id="shareButton">Share</button>
+			<input type="text" name="Comic Name" />
 		</div>
 		<div id="workspace"></div>
 		<div id="map"></div>
