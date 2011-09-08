@@ -1,0 +1,37 @@
+.ui-widget { font-size: .8em; }
+body { font-family: helvetica; }
+#workspace { left: -5000px; top: -5000px; width: 10000px; height: 10000px; cursor: move; background-image: url('/img/grid.jpg'); }
+.Strip { position: absolute; height: 325px; width: 0px;  background: #efefef; border: 1px solid #333; border-radius: 5px; }
+.Frame { display: block; width: 250px; height: 250px; border: 1px solid #ccc; border-radius: 5px; background: #fff;}
+.ActiveFrame { border: 1px solid #000;}
+
+.Strip > ul { padding: 0; margin: 0; }
+.Strip > ul > li { display: inline; float: left; margin-right: 5px; margin-left: 5px; margin-top: 5px;}
+
+.StripTitle { font-size: 1.1em; border-radius: 5px; border: 0; border-bottom: 1px solid #333; width: 100%;}
+#toolbar { overflow: hidden; }
+#toolbar input[type="text"] { width: 500px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; padding: 3px;}
+#newFrameButton { float: left; margin-right: 1em; }
+#toolbar { position: fixed; top: 0; z-index: 666; background: #efefef; width: 100%; left: 0; opacity: 0.9; padding: 5px; border-bottom: 1px solid #ccc;}
+#map { position: fixed; right: 50px; bottom: 50px; border: 1px solid #333; border-radius: 5px; width: 200px; height: 200px; background: #fff; opacity: 0.5;}
+.MapScreen {background: #0000ff; opacity: 0.5; position: absolute; z-index: 50; cursor: move;}
+.MapNode { background: #000; position: absolute; z-index: 30;}
+			
+.FrameTools button { margin-right: 5px; font-size: .85em; margin-top: 5px; text-align: center;}
+
+canvas { position: relative; background: #fff; opacity: 0.8}
+
+.LayersContainer { position: relative; width: 500px; height: 500px; border: 1px solid #AAA; border-radius: 5px; overflow: hidden;}
+.Layer {position: absolute; width: 500px; height: 500px; left: 0px; top: 0px;}
+.EventLayer { background: #fff; opacity: 0.7;}
+.SketchTools a { text-decoration: none; padding: 5px; }
+.Components {width: 450px; float: right; height: 495px; }
+body { overflow: hidden; }
+
+#tabs-events { overflow: hidden; }
+#tabs-events table { display: block; }
+#tabs-events table th { text-align: left; }
+#tabs-events input[type="text"] { border: 1px solid #aaa; width: 150px; }
+.Assets { overflow: hidden; }
+.Asset { cursor: move; padding: 5px; border: 1px solid #9999cc; z-index: 12; float: left; margin-right: 5px;  }
+.Event { position: absolute; border: 1px solid #9999cc; padding: 5px; width: 50px; height: 25px; }
