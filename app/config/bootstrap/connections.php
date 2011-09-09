@@ -74,6 +74,16 @@ else {
 	define('DB_PORT', 3307);
 }
 
+var_dump(array(
+	'type' => 'database',
+	'adapter' => 'MySql',
+	'host' => DB_HOST,
+	'login' => DB_USER,
+	'password' => DB_PASSWORD,
+	'database' => DB_NAME,
+	'encoding' => 'UTF-8'
+));
+
 Connections::add('default', array(
 	'type' => 'database',
 	'adapter' => 'MySql',
