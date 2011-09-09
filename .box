@@ -1,2 +1,3 @@
 shared_writable_dirs: [/data]
 index_list: [index.php]
+document_root: /app/webroot/
