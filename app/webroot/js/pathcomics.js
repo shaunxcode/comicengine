@@ -1,6 +1,65 @@
 var PC ={};
 			
 $(function() {
+	window.user = false;
+	
+	window.api = {
+		token: false,
+		callbackHandler: function(callback) {
+			return function(result){
+				if(result.exception) {
+					alert(result.exception);
+				} 
+				
+				if(callback) {
+					callback(result);
+				}
+			};
+		},
+		request: function(httpmethod, apimethod, data, callback) {
+			if(api.token) {
+				if(typeof data == 'string') {
+					data += '&apiToken=' + api.token;
+				} else {
+					data.apiToken = api.token;
+				}
+			}
+			
+			$[httpmethod]('/api/' + apimethod, data, api.callbackHandler(callback));
+		},
+		
+		post: function(method, data, callback) {
+			api.request('post', method, data, callback);
+		},
+		get: function(method, data, callback) {
+			api.request('get', method, data, callback);
+		},
+		put: function(method, data, callback) {
+			if(typeof data == 'string') {
+				data += '&_method=PUT';
+			} else {
+				var newData = {_method: 'PUT'};
+				newData[method] = data;
+				data = newData;
+			}
+			api.request('post', method, data, callback);
+		}
+	};
+	
+	$.each(['User', 'World', 'Comic', 'Strip', 'Frame', 'Asset', 'Character', 'CharacterImage'], function(i, noun) {
+		api[noun] = {
+			post: function(data, callback) {
+				api.post(noun, data, callback);
+			}, 
+			get: function(data, callback) {
+				api.get(noun, data, callback);
+			},
+			put: function(data, callback) {
+				api.put(noun, data, callback);
+			}
+		}
+	});
+		
 	PC.frames = {};
 	
 	PC.scrollTo = function(parent, child) {
@@ -38,7 +97,7 @@ $(function() {
 					    });
 					
 					    $.each([1, 2, 3, 5, 10, 15], function() {
-							sketchTools.append("<a href='#frame_sketch_" + id + "' data-size='" + this + "' style='background: #PCc'>" + this + "</a> ");
+							sketchTools.append("<a href='#frame_sketch_" + id + "' data-size='" + this + "' style='background: #ccc'>" + this + "</a> ");
 					    });
 					
 						var layers = $('<div />').addClass('LayersContainer');
@@ -74,7 +133,7 @@ $(function() {
 							.attr({id: 'tabs-events_layer'})
 							.addClass('Layer EventLayer')
 							.droppable({
-								aPCept: '.Asset',
+								accept: '.Asset',
 								drop: function(evt, ui) {
 									var x = Math.floor(ui.offset.left - eventLayer.offset().left);
 									var y = Math.floor(ui.offset.top - eventLayer.offset().top);
@@ -118,7 +177,7 @@ $(function() {
 									helper: 'clone'});
 						};
 						
-						var components = $('<div><ul><li><a href="#tabs-background">Background</a></li><li><a href="#tabs-events">Events</a></li><li><a href="#tabs-data">Data</a></li><li><a href="#tabs-characters">Characters</a></li><li><a href="#tabs-props">Props</a></li></ul></div>')
+						var components = $('<div><ul><li><a href="#tabs-background">Background</a></li><li><a href="#tabs-characters">Characters</a></li><li><a href="#tabs-props">Props</a></li><li><a href="#tabs-text">Text</a></li><li><a href="#tabs-events">Events</a></li></ul></div>')
 							.addClass('Components')
 							.append($('<div />').attr({id: 'tabs-background'}).append(sketchTools))
 							.append($('<div />').attr({id: 'tabs-events'}).append(
@@ -126,7 +185,7 @@ $(function() {
 									asset('Choice'),
 									asset('Click')),
 								events.view))
-							.append($('<div />').attr({id: 'tabs-data'}))
+							.append($('<div />').attr({id: 'tabs-text'}))
 							.append($('<div />').attr({id: 'tabs-characters'}))
 							.append($('<div />').attr({id: 'tabs-props'}))
 							.tabs({
@@ -252,30 +311,30 @@ $(function() {
 					
 	$(window).resize(map.drawScreen).resize();
 	
-	
-	var stripid = 0;
-	$('#newStripButton').button().click(function() {
+	var drawStrip = function(record) {
 		var mapNode = $('<div />').addClass('MapNode');
 		map.append(mapNode);
-		
-		stripid++;
-		
+
 		var strip = $('<div />')
-			.attr({id: stripid})
+			.attr({id: 'strip' + record.id})
 			.addClass('Strip')
 			.draggable({
 				snap: true, 
-				drag: function(){ 
+				drag: function() { 
 					strip.updateMapNode();
 				}, 
+				stop: function() {
+					var pos = strip.position();
+					api.Strip.put({id: record.id, xpos: pos.left, ypos: pos.top});
+				},
 				scroll: true
 			})
 			.css({
-				top: -$('#workspace').position().top + 260, 
-				left: -$('#workspace').position().left + 75
+				top: record.ypos + 'px', 
+				left: record.xpos + 'px'
 			})
 			.append(
-				$('<div />').append($('<input />').addClass('StripTitle').val('Title' + stripid)),
+				$('<div />').append($('<input />').addClass('StripTitle').val(record.name)),
 				$('<ul />'));
 		
 		strip.updateMapNode = function() {
@@ -291,11 +350,190 @@ $(function() {
 		$('#workspace').append(strip);
 		
 		PC.newFrame(strip);
-		
-	}).click();
+	};
+	
+	$('#newStripButton').button().click(function() {
+		api.Strip.post({
+			Strip:{
+				xpos: -$('#workspace').position().left + 75, 
+				ypos: -$('#workspace').position().top + 260, 
+				comicId: user.activeComic}
+			}, 
+			function(result){
+				if(result.id) {
+					user.strips[result.id] = result;
+					drawStrip(result);
+				}
+			});
+	});
 	
 	$(window).scrollTop(0).scrollLeft(0).scroll(map.drawScreen);
 	
 	$('#previewButton').button();
 	$('#shareButton').button();
-})
+	
+	var initComic = function(comicId) {
+		user.strips = {};
+		api.Strip.get({comicId: comicId}, function(result){
+			$.each(result, function(i, strip) {
+				user.strips[i] = strip;
+				drawStrip(strip);
+			});
+		});
+	};
+	
+	var newComic = function(worldId) {
+		var newComicDialog = $('<div />').html(
+			$('<form />')
+				.addClass('NewComicForm')
+				.append(
+					$('<p />').text('What should your new comic be called?'),
+					$('<div />').append(
+						$('<label />').text('Your Comic Name:'),
+						$('<input />').attr({type: 'hidden', name: 'Comic[userId]', value: user.id}),
+						$('<input />').attr({type: 'hidden', name: 'Comic[worldId]', value: worldId}),
+						$('<input />').attr({type: 'text', name: 'Comic[name]'}))))
+			.dialog({
+				modal: true,
+				width: 400,
+				closeOnEscape: false, 
+				draggable: false, 
+				resizable: false, 
+				open: function() {
+					$('.ui-dialog-titlebar', newComicDialog).hide();
+				},
+				buttons: {
+					'Create Comic': function()  {
+						api.Comic.post($('form', newComicDialog).serialize(), function(result){
+							if(result.id) {
+								user.comics = {};
+								user.comics[result.id] = result;
+								user.activeComic = result.id;
+								initComic(user.activeComic);
+								newComicDialog.dialog('close');
+							}
+						})
+					}
+				}
+			});
+	};
+	
+	var initWorld = function(worldId) {
+		api.Comic.get({worldId: worldId}, function(result) {
+			if(result.length == 0) {
+				newComic(worldId)
+			} else {
+				user.comics = result;
+				for(first in result) break;
+				user.activeComic = first;
+				initComic(user.activeComic);
+			}
+		});
+	};
+	
+	var newWorld = function() {
+		var newWorldDialog = $('<div />').html(
+			$('<form />')
+				.addClass('NewWorldForm')
+				.append(
+					$('<p />').text('Welcome to Path Comics. It looks like this is your first time here. Every comic takes place in a world - what is yours called?'),
+					$('<div />').append(
+						$('<label />').text('Your World Name:'),
+						$('<input />').attr({type: 'hidden', name: 'World[userId]', value: user.id}),
+						$('<input />').attr({type: 'text', name: 'World[name]'}))))
+			.dialog({
+				modal: true,
+				width: 400,
+				closeOnEscape: false, 
+				draggable: false, 
+				resizable: false, 
+				open: function() {
+					$('.ui-dialog-titlebar', newWorldDialog).hide();
+				},
+				buttons: {
+					'Create World': function()  {
+						api.World.post($('form', newWorldDialog).serialize(), function(result){
+							if(result.id) {
+								user.worlds = {};
+								user.worlds[result.id] = result;
+								user.activeWorld = result.id;
+								newWorldDialog.dialog('close');
+								initWorld(user.activeWorld);
+							}
+						})
+					}
+				}
+			});
+	};
+	
+	var registerDialog = $('<div />').html(
+		$('<form />')
+			.append(
+				$('<div />').append(
+					$('<label />').text('email:'),
+					$('<input />').attr({type: 'text', name: 'User[email]'})),
+				$('<div />').append(
+					$('<label />').text('password:'),
+					$('<input />').attr({type: 'password', name: 'User[password]'}))))
+		.dialog({
+			autoOpen: false,
+			modal: true,
+			width: 400,
+			closeOnEscape: false, 
+			draggable: false, 
+			resizable: false, 
+			open: function() {
+				$('.ui-dialog-titlebar', registerDialog).hide();
+			},
+			buttons: {
+				'Create a New Account': function()  {
+					api.User.post($('form', registerDialog).serialize(), function(result) {
+						if(result.apiToken) {
+							api.token = result.apiToken;
+							initUser(result);
+							registerDialog.dialog('close');
+						}
+					});
+				},
+				'Login to My Account': function() {
+					api.get('authenticate', $('form', registerDialog).serialize(), function(result) {
+						if(result.apiToken) {
+							api.token = result.apiToken;
+							initUser(result);
+							registerDialog.dialog('close');
+						}
+					});
+				}
+			}
+		});
+		
+	var initUser = function(record) {
+		user = record;
+		
+		$.cookie('apiToken', user.apiToken, {expires: 7});
+		
+		api.World.get({userId: record.id}, function(result) {
+			if(result.length == 0) {
+				newWorld();
+			} else {
+				user.worlds = result;
+				for(first in result) break;
+				user.activeWorld = first;
+				initWorld(user.activeWorld);
+			}
+		})
+	};
+	
+	if($.cookie('apiToken')) {
+		api.get('authenticateByToken', {apiToken: $.cookie('apiToken')}, function(result) {
+			if(result.apiToken) {
+				api.token = result.apiToken;
+				initUser(result);
+			}
+		});
+	} else {	
+		if (!api.token) {
+			registerDialog.dialog('open');
+		}
+	}
+});

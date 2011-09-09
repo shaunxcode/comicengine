@@ -62,7 +62,30 @@ Router::connect('/{:controller}/{:id:[0-9]+}', array('http:method' => 'GET', 'ac
 Router::connect('/{:controller}/{:id:[0-9]+}', array('http:method' => 'PUT', 'action' => 'update'));
 Router::connect('/{:controller}/{:id:[0-9]+}', array('http:method' => 'DELETE', 'action' => 'delete'));
 
+Router::connect('/api/getAuthToken', array('http:method' => 'GET', 'controller' => 'User', 'action' => 'getAuthToken'));
+Router::connect('/api/{:user}/{:controller}/', array('http:method' => 'POST', 'action' => 'create'));
+Router::connect('/api/{:user}/{:controller}/{:id:[0-9]+}', array('http:method' => 'GET', 'action' => 'read'));
+Router::connect('/api/{:user}/{:controller}/{:id:[0-9]+}', array('http:method' => 'PUT', 'action' => 'update'));
+Router::connect('/api/{:user}/{:controller}/{:id:[0-9]+}', array('http:method' => 'DELETE', 'action' => 'delete'));
 
+Router::connect('/api/authenticate', array('http:method' => 'GET', 'controller' => 'User', 'action' => 'authenticate'));
+Router::connect('/api/authenticateByToken', array('http:method' => 'GET', 'controller' => 'User', 'action' => 'authenticateByToken'));
+Router::connect('/api/{:controller}', array('http:method' => 'POST', 'action' => 'create'));
+Router::connect('/api/{:controller}', array('http:method' => 'GET', 'action' => 'search'));
+Router::connect('/api/{:controller}', array('http:method' => 'PUT', 'action' => 'update'));
+
+Router::connect(
+	'/api/{:user}/World/', 
+	array('http:method' => 'POST', 'controller' => 'Event', 'action' => 'read'));
+	
+Router::connect(
+	'/api/{:user}/World/{:worldId:[0-9]+}/Comic/{:comicId:[0-9]+}/Strip/{:stripId:[0-9]+}/Frame/{:frameId:[0-9]+}/Event/{:eventId:[0-9]+}', 
+	array('http:method' => 'GET', 'controller' => 'Event', 'action' => 'read'));
+
+Router::connect(
+	'/api/{:user}/World/{:worldId:[0-9]+}/Comic/{:comicId:[0-9]+}/Strip/{:stripId:[0-9]+}/Frame/{:frameId:[0-9]+}/Event/', 
+	array('http:method' => 'POST', 'controller' => 'Event', 'action' => 'create'));
+	
 /**
  * If you're using a document-oriented database, such as CouchDB or MongoDB, or another type of
  * database which uses 24-character hexidecimal values as primary keys, uncomment the routes below.

@@ -93,7 +93,6 @@ class Router extends \lithium\core\StaticObject {
 				$params = $tmp + $params;
 			}
 			$params += array('action' => 'index');
-
 			if (is_callable($options)) {
 				$options = array('handler' => $options);
 			}

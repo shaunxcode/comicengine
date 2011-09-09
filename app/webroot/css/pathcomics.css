@@ -35,3 +35,14 @@ body { overflow: hidden; }
 .Assets { overflow: hidden; }
 .Asset { cursor: move; padding: 5px; border: 1px solid #9999cc; z-index: 12; float: left; margin-right: 5px;  }
 .Event { position: absolute; border: 1px solid #9999cc; padding: 5px; width: 50px; height: 25px; }
+form { padding-top: 15px; }
+form label { text-align: right; margin-right: 5px; width: 110px; display: inline-block; font-size: 1.6em; }
+form > div { margin-bottom: 10px; }
+form > div > input {width: 255px; border: 1px solid #aaa; border-radius: 5px; height: 20px; font-size: 1.4em!important; }
+form.NewWorldForm, form.NewComicForm { padding-top: 0 }
+form.NewWorldForm p, form.NewComicForm p { padding-top: 5px; margin-top: 0; line-height: 1.5em; font-size: 1.2em; }
+form.NewWorldForm label { width: 168px; }
+form.NewWorldForm input { width: 198px; }
+
+form.NewComicForm label { width: 175px; } 
+form.NewComicForm input { width: 190px; } 

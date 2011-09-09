@@ -7,5 +7,3 @@
  */
 
 require 'webroot/index.php';
-
-?>
