@@ -4,7 +4,7 @@ document_root: /app/webroot/
 
 url_rewrites:
     -
-        rule: . /index.php
+        rule: ^(.*)$ /index.php?url=$1
         conditions:
             - "!-f $request_filename"
             - "!-d $request_filename"
