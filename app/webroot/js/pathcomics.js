@@ -482,9 +482,7 @@ $(function() {
 			closeOnEscape: false, 
 			draggable: false, 
 			resizable: false, 
-			open: function() {
-				$('.ui-dialog-titlebar', registerDialog).hide();
-			},
+			dialogClass: 'DialogNoTitle',
 			buttons: {
 				'Create a New Account': function()  {
 					api.User.post($('form', registerDialog).serialize(), function(result) {
@@ -529,6 +527,9 @@ $(function() {
 			if(result.apiToken) {
 				api.token = result.apiToken;
 				initUser(result);
+			} else {
+				registerDialog.dialog('open');
+				$.cookie('apiToken', null);
 			}
 		});
 	} else {	

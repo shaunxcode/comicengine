@@ -59,14 +59,27 @@ use lithium\data\Connections;
 /**
  * Uncomment this configuration to use MySQL as your default database.
  */
- Connections::add('default', array(
- 	'type' => 'database',
- 	'adapter' => 'MySql',
- 	'host' => 'localhost',
- 	'login' => 'root',
- 	'password' => '',
- 	'database' => 'pathcomics',
- 	'encoding' => 'UTF-8'
- ));
+if (isset($_SERVER['ENVIRONMENT']) && $_SERVER['ENVIRONMENT'] == 'PAGODA') {
+    define('DB_NAME', $_SERVER['DB_NAME']);
+    define('DB_USER', $_SERVER['DB_USER']);
+    define('DB_PASSWORD', $_SERVER['DB_PASSWORD']);
+    define('DB_HOST', $_SERVER['DB_HOST']);
+	define('DB_PORT', 3306);
+}
+else {
+    define('DB_NAME', 'joanie');
+    define('DB_USER', 'edyth');
+    define('DB_PASSWORD', 'ACz6SRhM');
+    define('DB_HOST', '127.0.0.1:3307');
+	define('DB_PORT', 3307);
+}
 
-?>
+Connections::add('default', array(
+	'type' => 'database',
+	'adapter' => 'MySql',
+	'host' => DB_HOST,
+	'login' => DB_USER,
+	'password' => DB_PASSWORD,
+	'database' => DB_NAME,
+	'encoding' => 'UTF-8'
+));

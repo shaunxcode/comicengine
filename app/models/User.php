@@ -18,7 +18,7 @@ User::applyFilter('save', function($self, $params, $chain) {
         $record->password = Password::hash($record->password, User::salt);
 		$record->apiToken = md5(time() . rand());
 		
-		$existingUser = User::find('all', array('criteria' => array('email' => $record->email)));
+		$existingUser = User::find('first', array('conditions' => array('email' => $record->email)));
 		if(!empty($existingUser)) {
 			throw new \Exception('There is already a user registered with that email address');
 		}

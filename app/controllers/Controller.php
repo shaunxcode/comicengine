@@ -36,13 +36,17 @@ class Controller extends \Lithium\action\Controller
 		return !empty($result);
 	}
 	
-	protected function apiTokenCheck()
+	protected function apiTokenCheck($method)
 	{
-		if(isset(self::$tokenOverride['search'])) {
+		if(in_array($method, static::$tokenOverride)) {
 			if(isset($this->request->query['apiToken'])) {
 				unset($this->request->query['apiToken']);
-				return true;
 			}
+			if(isset($this->request->data['apiToken'])) {
+				unset($this->request->data['apiToken']);
+			}
+			
+			return true;
 		}
 		
 		if(isset($this->request->data['apiToken'])) {
@@ -64,7 +68,7 @@ class Controller extends \Lithium\action\Controller
 	
 	public function create()
 	{
-		if($this->apiTokenCheck()) {
+		if($this->apiTokenCheck('create')) {
 			$record = $this->model->create($this->request->data[$this->modelName]);
 			try { 
 				if($record->save()) {
@@ -92,7 +96,7 @@ class Controller extends \Lithium\action\Controller
 
 	public function search()
 	{
-		if($this->apiTokenCheck()) {
+		if($this->apiTokenCheck('search')) {
 			if(count($this->request->query)) {
 				$result = $this->model->find('all', array('conditions' => $this->request->query));
 			}
@@ -103,7 +107,7 @@ class Controller extends \Lithium\action\Controller
 	
 	public function update()
 	{
-		if($this->apiTokenCheck()) {
+		if($this->apiTokenCheck('update')) {
 			$record = $this->request->data[$this->modelName];
 			if($this->model->update($record, array('id' => $record['id']))) {
 				return $this->json($this->model->filterFields($record));

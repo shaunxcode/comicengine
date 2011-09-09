@@ -45,4 +45,6 @@ form.NewWorldForm label { width: 168px; }
 form.NewWorldForm input { width: 198px; }
 
 form.NewComicForm label { width: 175px; } 
-form.NewComicForm input { width: 190px; } 
+form.NewComicForm input { width: 190px; }
+
+.DialogNoTitle .ui-dialog-titlebar { display: none; }

@@ -7,6 +7,8 @@ use lithium\security\Password;
 
 class UserController extends Controller 
 {
+	protected static $tokenOverride = array('create');
+	
 	public function authenticate()
 	{
 		$result = User::find('first', array(
