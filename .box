@@ -1,4 +1,4 @@
-shared_writable_dirs: [/data]
+shared_writable_dirs: [/app/webroot/assets]
 index_list: [index.php]
 document_root: /app/webroot/
 

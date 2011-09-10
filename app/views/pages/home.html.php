@@ -9,7 +9,10 @@
 	<button id="newStripButton">New Strip</button>
 	<button id="previewButton">Preview</button>
 	<button id="shareButton">Share</button>
-	<input type="text" name="Comic Name" />
+	<h3 class="WorldName"></h3>
+	<h3 class="ComicName"></h3>
+	<button id="logoutButton">Logout</button>
 </div>
 <div id="workspace"></div>
 <div id="map"></div>
+<iframe name="uploader" id="uploader"></iframe>

@@ -35,76 +35,15 @@ Router::connect('/', 'Pages::view');
  */
 Router::connect('/pages/{:args}', 'Pages::view');
 
-/**
- * Add the testing routes. These routes are only connected in non-production environments, and allow
- * browser-based access to the test suite for running unit and integration tests for the Lithium
- * core, as well as your own application and any other loaded plugins or frameworks. Browse to
- * [http://path/to/app/test](/test) to run tests.
- */
-if (!Environment::is('production')) {
-	Router::connect('/test/{:args}', array('controller' => 'lithium\test\Controller'));
-	Router::connect('/test', array('controller' => 'lithium\test\Controller'));
-}
-
-/**
- * ### Database object routes
- *
- * The routes below are used primarily for accessing database objects, where `{:id}` corresponds to
- * the primary key of the database object, and can be accessed in the controller as
- * `$this->request->id`.
- *
- * If you're using a relational database, such as MySQL, SQLite or Postgres, where the primary key
- * is an integer, uncomment the routes below to enable URLs like `/posts/edit/1138`,
- * `/posts/view/1138.json`, etc.
- */
-Router::connect('/{:controller}/', array('http:method' => 'POST', 'action' => 'create'));
-Router::connect('/{:controller}/{:id:[0-9]+}', array('http:method' => 'GET', 'action' => 'read'));
-Router::connect('/{:controller}/{:id:[0-9]+}', array('http:method' => 'PUT', 'action' => 'update'));
-Router::connect('/{:controller}/{:id:[0-9]+}', array('http:method' => 'DELETE', 'action' => 'delete'));
-
-Router::connect('/api/getAuthToken', array('http:method' => 'GET', 'controller' => 'User', 'action' => 'getAuthToken'));
-Router::connect('/api/{:user}/{:controller}/', array('http:method' => 'POST', 'action' => 'create'));
-Router::connect('/api/{:user}/{:controller}/{:id:[0-9]+}', array('http:method' => 'GET', 'action' => 'read'));
-Router::connect('/api/{:user}/{:controller}/{:id:[0-9]+}', array('http:method' => 'PUT', 'action' => 'update'));
-Router::connect('/api/{:user}/{:controller}/{:id:[0-9]+}', array('http:method' => 'DELETE', 'action' => 'delete'));
-
 Router::connect('/api/authenticate', array('http:method' => 'GET', 'controller' => 'User', 'action' => 'authenticate'));
 Router::connect('/api/authenticateByToken', array('http:method' => 'GET', 'controller' => 'User', 'action' => 'authenticateByToken'));
+
+Router::connect('/api/upload', array('http:method' => 'POST', 'controller' => 'Asset', 'action' => 'upload'));
+
 Router::connect('/api/{:controller}', array('http:method' => 'POST', 'action' => 'create'));
 Router::connect('/api/{:controller}', array('http:method' => 'GET', 'action' => 'search'));
+Router::connect('/api/{:controller}/{:model_id}', array('http:method' => 'GET', 'action' => 'read'));
 Router::connect('/api/{:controller}', array('http:method' => 'PUT', 'action' => 'update'));
 
-Router::connect(
-	'/api/{:user}/World/', 
-	array('http:method' => 'POST', 'controller' => 'Event', 'action' => 'read'));
-	
-Router::connect(
-	'/api/{:user}/World/{:worldId:[0-9]+}/Comic/{:comicId:[0-9]+}/Strip/{:stripId:[0-9]+}/Frame/{:frameId:[0-9]+}/Event/{:eventId:[0-9]+}', 
-	array('http:method' => 'GET', 'controller' => 'Event', 'action' => 'read'));
 
-Router::connect(
-	'/api/{:user}/World/{:worldId:[0-9]+}/Comic/{:comicId:[0-9]+}/Strip/{:stripId:[0-9]+}/Frame/{:frameId:[0-9]+}/Event/', 
-	array('http:method' => 'POST', 'controller' => 'Event', 'action' => 'create'));
-	
-/**
- * If you're using a document-oriented database, such as CouchDB or MongoDB, or another type of
- * database which uses 24-character hexidecimal values as primary keys, uncomment the routes below.
- */
-// Router::connect('/{:controller}/{:action}/{:id:[0-9a-f]{24}}.{:type}', array('id' => null));
-// Router::connect('/{:controller}/{:action}/{:id:[0-9a-f]{24}}');
-
-/**
- * Finally, connect the default route. This route acts as a catch-all, intercepting requests in the
- * following forms:
- *
- * - `/foo/bar`: Routes to `FooController::bar()` with no parameters passed.
- * - `/foo/bar/param1/param2`: Routes to `FooController::bar('param1, 'param2')`.
- * - `/foo`: Routes to `FooController::index()`, since `'index'` is assumed to be the action if none
- *   is otherwise specified.
- *
- * In almost all cases, custom routes should be added above this one, since route-matching works in
- * a top-down fashion.
- */
 Router::connect('/{:controller}/{:action}/{:args}');
-
-?>

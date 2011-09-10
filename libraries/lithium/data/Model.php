@@ -491,15 +491,18 @@ class Model extends \lithium\core\StaticObject {
 		if (is_array($key)) {
 			$self->_meta = $key + $self->_meta;
 		}
-
+		
 		if (!$self->_meta['initialized']) {
 			$self->_meta['initialized'] = true;
 
+			$className = explode('\\', get_called_class());
+			$self->_meta['name'] = end($className);
 			if ($self->_meta['source'] === null) {
 				$self->_meta['source'] = Inflector::tableize($self->_meta['name']);
 			}
 			$titleKeys = array('title', 'name');
-
+			$self->_meta['key'] = 'id';
+			
 			if (isset($self->_meta['key'])) {
 				$titleKeys = array_merge($titleKeys, (array) $self->_meta['key']);
 			}
@@ -1095,5 +1098,3 @@ class Model extends \lithium\core\StaticObject {
 		return static::connection();
 	}
 }
-
-?>

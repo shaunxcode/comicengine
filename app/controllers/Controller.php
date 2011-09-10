@@ -30,35 +30,35 @@ class Controller extends \Lithium\action\Controller
 		return $this->json(array('exception' => $msg, 'code' => 666));
 	}
 	
-	protected function apiTokenExists($apiToken)
+	protected function api_tokenExists($api_token)
 	{
-		$result = User::find('first', array('conditions' => array('apiToken' => $apiToken)));
+		$result = User::find('first', array('conditions' => array('api_token' => $api_token)));
 		return !empty($result);
 	}
 	
-	protected function apiTokenCheck($method)
+	protected function api_tokenCheck($method)
 	{
 		if(in_array($method, static::$tokenOverride)) {
-			if(isset($this->request->query['apiToken'])) {
-				unset($this->request->query['apiToken']);
+			if(isset($this->request->query['api_token'])) {
+				unset($this->request->query['api_token']);
 			}
-			if(isset($this->request->data['apiToken'])) {
-				unset($this->request->data['apiToken']);
+			if(isset($this->request->data['api_token'])) {
+				unset($this->request->data['api_token']);
 			}
 			
 			return true;
 		}
 		
-		if(isset($this->request->data['apiToken'])) {
-			if($this->apiTokenExists($this->request->data['apiToken'])) {
-				unset($this->request->data['apiToken']);
+		if(isset($this->request->data['api_token'])) {
+			if($this->api_tokenExists($this->request->data['api_token'])) {
+				unset($this->request->data['api_token']);
 				return true;
 			}
 		}
 		
-		if(isset($this->request->query['apiToken'])) {
-			if($this->apiTokenExists($this->request->query['apiToken'])) {
-				unset($this->request->query['apiToken']);
+		if(isset($this->request->query['api_token'])) {
+			if($this->api_tokenExists($this->request->query['api_token'])) {
+				unset($this->request->query['api_token']);
 				return true;
 			}
 		}			
@@ -68,7 +68,7 @@ class Controller extends \Lithium\action\Controller
 	
 	public function create()
 	{
-		if($this->apiTokenCheck('create')) {
+		if($this->api_tokenCheck('create')) {
 			$record = $this->model->create($this->request->data[$this->modelName]);
 			try { 
 				if($record->save()) {
@@ -84,30 +84,28 @@ class Controller extends \Lithium\action\Controller
 		
 	public function read()
 	{
-		if(!isset($this->request->params[$this->primaryField])) {
-			throw new \Exception('Yo dawg, I heard you forgot to give me an id');
+		$result = $this->model->find('first', array('conditions' => array('id' => $this->request->params['model_id'])));
+		if(empty($result)) {
+			$this->jsonException('Could not find record');
 		}
 		
-		var_dump($this->request->params);
-		$pkey = $this->request->params[$this->primaryField];
-		echo "hey dog I heard you like {$this->modelName} {$pkey}";
-		die();
+		return $this->json($this->model->filterFields($result));
 	}
 
 	public function search()
 	{
-		if($this->apiTokenCheck('search')) {
+		if($this->api_tokenCheck('search')) {
 			if(count($this->request->query)) {
 				$result = $this->model->find('all', array('conditions' => $this->request->query));
 			}
-			
-			return $this->json(empty($result) ? array() : $this->model->filterFields($result->data()));
+						
+			return $this->json(empty($result) ? array() : $this->model->filterFields($result));
 		}
 	}
 	
 	public function update()
 	{
-		if($this->apiTokenCheck('update')) {
+		if($this->api_tokenCheck('update')) {
 			$record = $this->request->data[$this->modelName];
 			if($this->model->update($record, array('id' => $record['id']))) {
 				return $this->json($this->model->filterFields($record));

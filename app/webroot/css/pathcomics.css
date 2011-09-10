@@ -12,11 +12,15 @@ body { font-family: helvetica; }
 #toolbar { overflow: hidden; }
 #toolbar input[type="text"] { width: 500px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; padding: 3px;}
 #newFrameButton { float: left; margin-right: 1em; }
-#toolbar { position: fixed; top: 0; z-index: 666; background: #efefef; width: 100%; left: 0; opacity: 0.9; padding: 5px; border-bottom: 1px solid #ccc;}
-#map { position: fixed; right: 50px; bottom: 50px; border: 1px solid #333; border-radius: 5px; width: 200px; height: 200px; background: #fff; opacity: 0.5;}
+#toolbar { position: fixed; top: 0; z-index: 666; background: #666; width: 100%; left: 0; opacity: 0.75; padding: 10px; border-bottom: 1px solid #aaa;}
+#map { position: fixed; right: 50px; bottom: 50px; border: 1px solid #333; border-radius: 5px; width: 200px; height: 200px; background: #666; opacity: 0.75;}
 .MapScreen {background: #0000ff; opacity: 0.5; position: absolute; z-index: 50; cursor: move;}
-.MapNode { background: #000; position: absolute; z-index: 30;}
-			
+.MapNode { background: #fff; position: absolute; z-index: 30;}
+
+#toolbar button { opacity: 1; float: left; margin-right: 5px; } 
+#toolbar h3 { display: block; float: left; padding-top: 5px; margin: 0; color: #fff; font-size: 1.4em; } 
+#toolbar button#logoutButton { float: right; margin-right: 2em; } 
+		
 .FrameTools button { margin-right: 5px; font-size: .85em; margin-top: 5px; text-align: center;}
 
 canvas { position: relative; background: #fff; opacity: 0.8}
@@ -48,3 +52,5 @@ form.NewComicForm label { width: 175px; }
 form.NewComicForm input { width: 190px; }
 
 .DialogNoTitle .ui-dialog-titlebar { display: none; }
+
+#uploader { position: fixed; bottom: 0; left: 0; display: none;}

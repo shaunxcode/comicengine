@@ -67,11 +67,10 @@ if (isset($_SERVER['ENVIRONMENT']) && $_SERVER['ENVIRONMENT'] == 'PAGODA') {
 	define('DB_PORT', 3306);
 }
 else {
-    define('DB_NAME', 'joanie');
-    define('DB_USER', 'edyth');
-    define('DB_PASSWORD', 'ACz6SRhM');
-    define('DB_HOST', '127.0.0.1:3307');
-	define('DB_PORT', 3307);
+    define('DB_NAME', 'pathcomics');
+    define('DB_USER', 'root');
+    define('DB_PASSWORD', '');
+    define('DB_HOST', '127.0.0.1');
 }
 
 Connections::add('default', array(

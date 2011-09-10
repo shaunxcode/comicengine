@@ -29,7 +29,7 @@ class UserController extends Controller
 	{
 		$result = User::find('first', array(
 			'conditions' => array(
-				'apiToken' => $this->request->query['apiToken'])));
+				'api_token' => $this->request->query['api_token'])));
 				
 		if(!empty($result)) {
 			$data = $result->data();
