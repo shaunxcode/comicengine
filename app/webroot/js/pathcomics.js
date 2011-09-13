@@ -716,7 +716,7 @@ $(function() {
 								top: asset.ypos + 'px',
 								width: asset.width + 'px',
 								height: asset.height + 'px', 
-								border: '1px dashed #aaa'
+								border: '0px dashed #aaa'
 						
 							})
 							.click(function(){
