@@ -32,6 +32,9 @@ var __slice = Array.prototype.slice;
       this.el = el;
       this.canvas = $(el);
       this.context = el.getContext('2d');
+	  if(opts.stopPaintingCallback) {
+		this.stopPaintingCallback = opts.stopPaintingCallback;
+	  }
       this.options = $.extend({
         toolLinks: true,
         defaultTool: 'marker',
@@ -90,9 +93,14 @@ var __slice = Array.prototype.slice;
     Sketch.prototype.stopPainting = function() {
       if (this.action) {
         this.actions.push(this.action);
+	    if(this.stopPaintingCallback) {
+			this.stopPaintingCallback(this);
+		}
+	
       }
       this.painting = false;
       this.action = null;
+
       return this.redraw();
     };
     Sketch.prototype.onEvent = function(e) {

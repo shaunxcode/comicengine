@@ -4,13 +4,19 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
 <script type="text/javascript" src="/js/jquery.cookie.js"></script>
 <script type="text/javascript" src="/js/sketch.js"></script>
+<script type="text/javascript" src="/js/artisan-min.js"></script>
 <script type="text/javascript" src="/js/pathcomics.js"></script>
+<script type="text/javascript" src="/js/jquery.transform.js"></script>
+<script type="text/javascript" src="/js/jquery.transformable-v.3.js"></script>
+
 <div id="toolbar">
 	<button id="newStripButton">New Strip</button>
 	<button id="previewButton">Preview</button>
 	<button id="shareButton">Share</button>
 	<h3 class="WorldName"></h3>
 	<h3 class="ComicName"></h3>
+	<label>Starting Frame:</label>
+	<select id="startingFrameCombo"></select>
 	<button id="logoutButton">Logout</button>
 </div>
 <div id="workspace"></div>

@@ -69,16 +69,27 @@ class Controller extends \Lithium\action\Controller
 	public function create()
 	{
 		if($this->api_tokenCheck('create')) {
-			$record = $this->model->create($this->request->data[$this->modelName]);
-			try { 
-				if($record->save()) {
-					return $this->json($this->model->filterFields($record->to('array')));
-				} else {
-					return $this->jsonException('could not create');
-				}
-			} catch(\Exception $e) {
-				return $this->jsonException($e->getMessage());
+			if(isset($this->request->data['many'])) {
+				$records = $this->request->data['many'];
+			} else {
+				$records = array($this->request->data[$this->modelName]);
 			}
+			
+			$result = array();
+			foreach($records as $data) {
+				$record = $this->model->create($data);
+				try { 
+					if($record->save()) {
+						$result[] = $this->model->filterFields($record->to('array'));
+					} else {
+						return $this->jsonException('could not create');
+					}
+				} catch(\Exception $e) {
+					return $this->jsonException($e->getMessage());
+				}
+			}
+			
+			return $this->json($result);
 		}
 	}
 		
@@ -106,10 +117,19 @@ class Controller extends \Lithium\action\Controller
 	public function update()
 	{
 		if($this->api_tokenCheck('update')) {
-			$record = $this->request->data[$this->modelName];
-			if($this->model->update($record, array('id' => $record['id']))) {
-				return $this->json($this->model->filterFields($record));
+			if(isset($this->request->data['many'])) {
+				$records = $this->request->data['many'];
+			} else {
+				$records = array($this->request->data[$this->modelName]);
 			}
+			
+			$result = array();
+			foreach($records as $record) {
+				if($this->model->update($record, array('id' => $record['id']))) {
+					$result[] = $record['id'];
+				}
+			}
+			return $this->json($result);
 		}
 	}
 	

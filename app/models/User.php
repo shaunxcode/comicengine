@@ -16,7 +16,7 @@ User::applyFilter('save', function($self, $params, $chain) {
     
     if(!$record->id && !empty($record->password)){
         $record->password = Password::hash($record->password, User::salt);
-		$record->apiToken = md5(time() . rand());
+		$record->api_token = md5(time() . rand());
 		
 		$existingUser = User::find('first', array('conditions' => array('email' => $record->email)));
 		if(!empty($existingUser)) {

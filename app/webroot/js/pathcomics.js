@@ -39,7 +39,12 @@ $(function() {
 				data += '&_method=PUT';
 			} else {
 				var newData = {_method: 'PUT'};
-				newData[method] = data;
+				if(data.many) { 
+					newData.many = data.many;
+				} else {
+					newData[method] = data;	
+				}
+				
 				data = newData;
 			}
 			api.request('post', method, data, callback);
@@ -53,12 +58,15 @@ $(function() {
 	$.each(['User', 'World', 'Comic', 'Strip', 'Frame', 'Asset', 'Character', 'CharacterImage'], function(i, noun) {
 		api[noun] = {
 			post: function(data, callback) {
-				if(!data[noun]) {
+				if(typeof data != 'string' && !data[noun]) {
 					var newData = {};
 					newData[noun] = data;
 					data = newData;
 				}
 				api.post(noun, data, callback);
+			},
+			postMany: function(data, callback) {
+				api.post(noun, {many: data}, callback);
 			},
 			getById: function(id, callback) {
 				api.get(noun + '/' + id, '', callback);
@@ -68,10 +76,23 @@ $(function() {
 			},
 			put: function(data, callback) {
 				api.put(noun, data, callback);
+			},
+			putMany: function(data, callback) {
+				api.put(noun, {many: data}, callback);
 			}
 		}
 	});
-		
+	
+	PC.strips = {
+		update: function() {
+			var combo = $('#startingFrameCombo').html('');
+			$.each(user.strips, function(i, strip) {
+				combo.append($('<option />').attr('value', strip.id).text(strip.name));
+			});
+			combo.val(user.comics[user.activeComic].start_strip_id);
+		}
+	};
+	
 	PC.frames = {};
 	
 	PC.scrollTo = function(parent, child) {
@@ -82,6 +103,7 @@ $(function() {
 	};
 	
 	PC.frameId = 0;
+	PC.canvasId = 0; 
 	
 	PC.drawFrame = function(strip, record, activeFrame, prepend) {
 		var frame =  $('<img />')
@@ -102,7 +124,7 @@ $(function() {
 					})); 
 					
 				tools.append(
-					$('<button />').text('edit frame').button().click(function() {
+					$('<button />').text('edit').button().click(function() {
 						api.Frame.getById(record.id, function(result) {
 							var sketchTools = $('<div />').addClass('SketchTools');
 							$.each(['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#000', '#fff'], function() {
@@ -125,9 +147,68 @@ $(function() {
 								.attr({id: 'tabs-background_layer'})
 								.append(
 									$('<canvas />').attr({width: 500, height: 500, 'id': 'frame_sketch_' + record.id}));
-						
+
+							var eventLayer = $('<div />')
+								.attr({id: 'tabs-events_layer'})
+								.addClass('Layer EventLayer')
+								.droppable({
+									accept: '.Asset',
+									drop: function(evt, ui) {
+										events.add({
+											type: ui.draggable.data('type'), 
+											xpos: Math.floor(ui.offset.left - eventLayer.offset().left), 
+											ypos: Math.floor(ui.offset.top - eventLayer.offset().top), 
+											width: ui.helper.width(), 
+											height: ui.helper.height(), 
+											value: ''
+										});
+									}
+								});
+																
 							var events = {
+								models: [],
 								add: function(event) {
+									event.view = $('<div />')
+										.addClass('Event event-' + event.type)
+										.draggable({
+											containment: 'parent',
+											drag: function(evt, ui) {
+												ui.helper.css({left: ui.position.left, top: ui.position.top})
+											},
+											stop: function(evt, ui) {
+												event.xpos = Math.floor(ui.position.left);
+												event.ypos = Math.floor(ui.position.top);
+												$('.XposCell', event.view.row).text(event.xpos);
+												$('.YposCell', event.view.row).text(event.ypos);
+											}
+										})
+										.css({
+											top: event.ypos + 'px', 
+											left: event.xpos + 'px', 
+											width: event.width + 'px', 
+											height: event.height + 'px'})
+										.resizable({
+											stop: function() {
+												event.width = event.view.width();
+												event.height = event.view.height();
+												$('.WidthCell', event.view.row).text(event.width);
+												$('.HeightCell', event.view.row).text(event.height);
+											}
+										});
+									
+									eventLayer.append(event.view);
+									
+									//in thoory this would just be for type of "choice"
+									if(event.type == 'choice') { 
+										var valueControl = $('<select />');
+										$.each(user.strips, function(i, strip) {
+											valueControl.append($('<option />').attr('value', strip.id).text(strip.name));
+										});
+										valueControl.val(event.value);
+									} else {
+										var valueControl = $('<input />').attr('type', 'text').val(event.value); 
+									}
+										
 									event.view.row = $('<tr />')
 										.append(
 											$('<td />').addClass('TypeCell').text(event.type),
@@ -135,51 +216,21 @@ $(function() {
 											$('<td />').addClass('YposCell').text(event.ypos),
 											$('<td />').addClass('WidthCell').text(event.width),
 											$('<td />').addClass('HeightCell').text(event.height),
-											$('<td />').addClass('DateCell').html($('<input />').attr('type', 'text')));
+											$('<td />').addClass('DataCell').html(valueControl));
 									$('tbody', events.view).append(event.view.row);
+									
+									event.value = function() {
+										var value = {};
+										value[event.type] = valueControl.val();
+										return value;
+									};
+									
+									events.models.push(event);
 								},
 							
 								view: $('<table><thead><tr><th>type</th><th>x pos</th><th>y pos</th><th>width</th><th>height</th><th>value</th></thead><tbody></tbody></table>')
 							};
-						
-							var eventLayer = $('<div />')
-								.attr({id: 'tabs-events_layer'})
-								.addClass('Layer EventLayer')
-								.droppable({
-									accept: '.Asset',
-									drop: function(evt, ui) {
-										var x = Math.floor(ui.offset.left - eventLayer.offset().left);
-										var y = Math.floor(ui.offset.top - eventLayer.offset().top);
-									
-										var view = $('<div />')
-											.addClass('Event event-' + ui.draggable.data('type'))
-											.draggable({
-												containment: 'parent',
-												stop: function(evt, ui) {
-													$('.XposCell', view.row).text(Math.floor(ui.position.left));
-													$('.YposCell', view.row).text(Math.floor(ui.position.top));
-												}
-											})
-											.css({top: y, left: x})
-											.resizable({
-												stop: function() {
-													$('.WidthCell', view.row).text(view.width());
-													$('.HeightCell', view.row).text(view.height());
-												}
-											});
-										
-										eventLayer.append(view);
-									
-										events.add({
-											type: ui.draggable.data('type'), 
-											xpos: x, 
-											ypos: y, 
-											width: view.width(), 
-											height: view.height(), 
-											data: '', view: view});
-									}
-								})
-						
+												
 							var asset = function(name) {
 								return $('<div />')
 									.addClass('Asset')
@@ -199,16 +250,69 @@ $(function() {
 										asset('Click')),
 									events.view))
 								.append($('<div />').attr({id: 'tabs-text'}))
-								.append($('<div />').attr({id: 'tabs-characters'}))
+								.append($('<div />').attr({id: 'tabs-characters'}).append(
+									$('<button />').text('Add Character').button().click(function(){
+										
+									}), 
+									$('<div />').addClass('CharacterList')))
 								.append($('<div />').attr({id: 'tabs-props'}))
 								.tabs({
 									select: function(evt, ui) {
 										layers.bringToTop($(ui.tab).attr('href') + '_layer');
 									}
 								}).tabs('select', 0); 
-						
-							layers.append(eventLayer, backgroundLayer);
-						
+							
+							PC.canvasId++;
+							var flatBg = $('<canvas />').attr({id: 'flatBg' + PC.canvasId, width: 500, height: 500}).addClass('Layer'); 
+							
+							var characters = {
+								add: function(character) {
+									character.view = $('<div />')
+										.append($('<img />').attr({
+											src: character.value.src,
+											width: character.width,
+											height: character.height}))
+										.css({
+											position: 'absolute', 
+											zIndex: 800, 
+											background: 'transparent',
+											width: (character.width + 20) +  'px',
+											height: (character.height ) + 'px',
+											left: character.xpos + 'px',
+											top: character.ypos + 'px'
+										})
+										.draggable()
+										.transformable({
+											skew: function() { return false },
+											scale: function(evt, ui) { ui.scalex = ui.scaley },
+											scaleStart: function(evt, ui) { console.log('yo'); console.log(ui); },
+											scaleStop: function(evt, ui) { console.log('bro'); console.log(ui); }
+										});
+									
+									characterLayer.append(character.view);
+								}
+							};
+							
+							var characterLayer = $('<div  />')
+								.addClass('Layer Characters_layer')							
+								.droppable({
+									accept: '.Character',
+									drop: function(evt, ui) {
+										characters.add({
+											type: 'character',
+											xpos: Math.floor(ui.offset.left - characterLayer.offset().left), 
+											ypos: Math.floor(ui.offset.top - characterLayer.offset().top), 
+											width: ui.helper.width(),
+											height: ui.helper.height(),
+											value: {src: ui.helper.attr('src')}
+										});
+									}
+								});
+							
+							layers.append(eventLayer, flatBg);
+							
+							layers.append(backgroundLayer, characterLayer);
+							
 							var frameEditorDialog = $('<div />')
 								.append(components, layers)
 								.dialog({
@@ -221,42 +325,117 @@ $(function() {
 										$(this).remove();
 									},
 									open: function() {
-										$('#frame_sketch_' + record.id).sketch();
-										if(frame.data('actions')) {
-											$('#frame_sketch_' + record.id).sketch('actions', frame.data('actions'));
-												$('#frame_sketch_' + record.id).sketch('redraw');
-										}		
+										$('#frame_sketch_' + record.id).sketch({
+											stopPaintingCallback: function(sketch) {
+												artisan.drawImage('flatBg' + PC.canvasId, document.getElementById('frame_sketch_' + record.id).toDataURL('png'), 0, 0, 500, 500);
+												setTimeout(function(){ sketch.actions = [] }, 100);
+											}
+										});
+										
+										if(result.assets) {
+											$.each(result.assets, function(i, asset) {
+												if(asset.type == 'background') { 
+													result.bg = asset;
+													artisan.drawImage('flatBg' + PC.canvasId, '/assets/'  + record.id + '/' + asset.id + '.png?rand=' + (new Date().getTime()), 0, 0, 500, 500);
+												}
+												
+												if(asset.type == 'event') {
+													//get first key
+													for(var type in asset.value) break;
+													events.add({
+														id:	asset.id,
+														type: type, 
+														xpos: asset.xpos, 
+														ypos: asset.ypos, 
+														width: asset.width, 
+														height: asset.height, 
+														value: asset.value[type]
+													});
+												}
+											})
+										}
+										
+										$.each(['breadwig', 'spiderman', 'elephant'], function(i, char) {
+											$('.CharacterList').append($('<img />').attr({
+												src: '/assets/characters/' + char + '.png'
+											})
+											.draggable({
+												revert: true,
+												helper: 'clone'
+											})
+											.data('type', 'character')
+											.addClass('Character'))
+										})
+										
 									},
 									buttons: {
 										Cancel: function() {
 											$(this).dialog('close');
 										}, 
 										Save: function() {
-											var png = document.getElementById('frame_sketch_' + record.id).toDataURL('png');
-											var actions = $('#frame_sketch_' + record.id).sketch('actions');
-											frame
-												.attr('src', png)
-												.data('actions', actions);
+											var png = artisan.convertTo.PNG('flatBg' + PC.canvasId); 
 											
-											api.Asset.post({
-													frame_id: record.id,
-													xpos: 0, 
-													ypos: 0,
-													width: 500, 
-													height: 500,
-													layer: 1, 
-													value: actions,
-													type: 'background',
-													image: png
-												}, 
-												function(result) {
-													frameEditorDialog.dialog('close');
+											frame
+												.attr('src', png);
+
+											var create = [];											
+											var update = [];
+
+											var options = {
+												frame_id: record.id,
+												xpos: 0, 
+												ypos: 0,
+												width: 500, 
+												height: 500,
+												layer: 1, 
+												type: 'background',
+												image: png
+											};
+
+											if(result.bg) {
+												options.id = result.bg.id;
+												update.push(options);
+											} else {
+												create.push(options);
+											}
+																						
+											if(events.models.length) {
+												$.each(events.models, function(i, m) {
+													var rec = {
+														frame_id: record.id, 
+														xpos: m.xpos,
+														ypos: m.ypos,
+														width: m.width,
+														height: m.height,
+														layer: 2, 
+														type: 'event',
+														value: m.value(), 
+													};
+													
+													if(m.id) {
+														rec.id = m.id;
+														update.push(rec);
+													} else {
+														create.push(rec);
+													}
 												});
+											}
+											
+											if(create.length) {
+												api.Asset.postMany(create);
+											}
+											
+											if(update.length) {
+												api.Asset.putMany(update);
+											}
+											
+											frameEditorDialog.dialog('close');
 										}
 									}});
 					})
 				}));
 					
+				tools.append($('<button />').text('clone').button());
 				tools.append(
 					$('<button />').text('x').button().click(function(){
 						frame.parent().remove();
@@ -364,7 +543,31 @@ $(function() {
 				left: record.xpos + 'px'
 			})
 			.append(
-				$('<div />').append($('<input />').addClass('StripTitle').val(record.name)),
+				$('<div />').append($('<input />').addClass('StripTitle').val(record.name)
+					.keyup(function(evt) {
+						if(evt.keyCode == 13) {
+							$(this).blur();
+						}
+						if(evt.keyCode == 27) {
+							$(this).val(record.name);
+							$(this).blur();
+						}
+					})
+					.blur(function() {
+						if(!$(this).val().length) {
+							alert('The strip must have at least a one character name');
+							$(this).val(record.name);
+							return;
+						}
+						
+						if(record.name != $(this).val()) { 
+							record.name = $(this).val();
+							api.Strip.put({id: record.id, name: record.name}, function(result) {
+								user.strips[record.id].name = record.name;
+								PC.strips.update();
+							});
+						}
+					})),
 				$('<ul />'));
 		
 		strip.record = record;
@@ -422,12 +625,26 @@ $(function() {
 	
 	$(window).scrollTop(0).scrollLeft(0).scroll(map.drawScreen);
 	
-	$('#previewButton').button();
+	$('#previewButton').button().click(function(){
+		var previewModal = $('<div />')
+			.addClass('PreviewModal')
+			.html($('<div />').addClass('PreviewInner'))
+			.dialog({
+				title: 'Preview',
+				modal: true, 
+				width: 550, 
+				height: 550,
+				resizable: false,
+				draggable: false
+			});
+			
+	});
+	
 	$('#shareButton').button();
 	
 	var initComic = function(comic_id) {
-		$('.WorldName').text(user.worlds[user.activeWorld].name);
-		$('.ComicName').text(': ' + user.comics[user.activeComic].name);
+		$('.WorldName').text(user.worlds[user.activeWorld].name + ':');
+		$('.ComicName').text(user.comics[user.activeComic].name);
 		user.strips = {};
 		api.Strip.get({comic_id: comic_id}, function(result){
 			$.each(result, function(i, strip) {
@@ -438,6 +655,7 @@ $(function() {
 				user.strips[i] = strip;
 				drawStrip(strip);
 			});
+			PC.strips.update();
 		});
 	};
 	

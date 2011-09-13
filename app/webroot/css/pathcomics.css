@@ -18,18 +18,21 @@ body { font-family: helvetica; }
 .MapNode { background: #fff; position: absolute; z-index: 30;}
 
 #toolbar button { opacity: 1; float: left; margin-right: 5px; } 
-#toolbar h3 { display: block; float: left; padding-top: 5px; margin: 0; color: #fff; font-size: 1.4em; } 
+#toolbar h3 { display: block; float: left; padding-top: 5px; margin: 0; color: #fff; font-size: 1.4em; margin-left: 10px; } 
 #toolbar button#logoutButton { float: right; margin-right: 2em; } 
+#toolbar label { display: block; float: left; padding-top: 8px; margin: 0; color: #fff; font-size: 1.2em; margin-left: 30px; }
+#toolbar select { display: block; float: left;  margin: 0; margin-top: 4px; color: #000; font-size: 1em; margin-left: 5px; }
 		
-.FrameTools button { margin-right: 5px; font-size: .85em; margin-top: 5px; text-align: center;}
+.FrameTools button { margin-right: 5px; font-size: .75em; margin-top: 5px; text-align: center;}
 
-canvas { position: relative; background: #fff; opacity: 0.8}
+canvas { position: relative; background: transparent;}
 
 .LayersContainer { position: relative; width: 500px; height: 500px; border: 1px solid #AAA; border-radius: 5px; overflow: hidden;}
 .Layer {position: absolute; width: 500px; height: 500px; left: 0px; top: 0px;}
 .EventLayer { background: #fff; opacity: 0.7;}
 .SketchTools a { text-decoration: none; padding: 5px; }
 .Components {width: 450px; float: right; height: 495px; }
+.Character { width: 125px; float: left; margin-top: 10px; z-index: 66; } 
 body { overflow: hidden; }
 
 #tabs-events { overflow: hidden; }
@@ -54,3 +57,5 @@ form.NewComicForm input { width: 190px; }
 .DialogNoTitle .ui-dialog-titlebar { display: none; }
 
 #uploader { position: fixed; bottom: 0; left: 0; display: none;}
+
+.PreviewInner {background: #000; }
