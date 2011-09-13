@@ -4,7 +4,7 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
 <script type="text/javascript" src="/js/jquery.cookie.js"></script>
 <script type="text/javascript" src="/js/sketch.js"></script>
-<script type="text/javascript" src="/js/artisan-min.js"></script>
+<script type="text/javascript" src="/js/artisan.js"></script>
 <script type="text/javascript" src="/js/pathcomics.js"></script>
 <script type="text/javascript" src="/js/jquery.transform.js"></script>
 <script type="text/javascript" src="/js/jquery.transformable-v.3.js"></script>

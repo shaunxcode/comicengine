@@ -6,7 +6,7 @@ body { font-family: helvetica; }
 .ActiveFrame { border: 1px solid #000;}
 
 .Strip > ul { padding: 0; margin: 0; }
-.Strip > ul > li { display: inline; float: left; margin-right: 5px; margin-left: 5px; margin-top: 5px;}
+.Strip > ul > li { display: inline; float: left; margin-right: 5px; margin-left: 5px; margin-top: 5px; position: relative; }
 
 .StripTitle { font-size: 1.1em; border-radius: 5px; border: 0; border-bottom: 1px solid #333; width: 100%;}
 #toolbar { overflow: hidden; }
@@ -31,7 +31,10 @@ canvas { position: relative; background: transparent;}
 .Layer {position: absolute; width: 500px; height: 500px; left: 0px; top: 0px;}
 .EventLayer { background: #fff; opacity: 0.7;}
 .SketchTools a { text-decoration: none; padding: 5px; }
-.Components {width: 450px; float: right; height: 495px; }
+.SketchTools a.PaintColor.Active { border: 2px solid #000; }
+.SketchTools a.PaintSize.Active { border: 2px solid #000; } 
+ 
+.Components {width: 440px; float: right; height: 495px; }
 .Character { width: 125px; float: left; margin-top: 10px; z-index: 66; } 
 body { overflow: hidden; }
 
@@ -58,4 +61,4 @@ form.NewComicForm input { width: 190px; }
 
 #uploader { position: fixed; bottom: 0; left: 0; display: none;}
 
-.PreviewInner {background: #000; }
+.PreviewInner {background: #fff; position: relative; }

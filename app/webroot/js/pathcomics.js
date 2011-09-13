@@ -128,13 +128,20 @@ $(function() {
 						api.Frame.getById(record.id, function(result) {
 							var sketchTools = $('<div />').addClass('SketchTools');
 							$.each(['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#000', '#fff'], function() {
-								sketchTools.append("<a href='#frame_sketch_" + record.id + "' data-color='" + this + "' style='width: 10px; height: 10px; background: " + this + ";'>&nbsp;</a> ");
+								sketchTools.append($("<a href='#frame_sketch_" + record.id + "' data-color='" + this + "' style='width: 10px; height: 10px; background: " + this + ";'>&nbsp;</a> ").addClass('PaintColor').click(function(){
+									$('a.PaintColor', sketchTools).removeClass('Active');
+									$(this).addClass('Active');
+								}));
 						    });
-					
+														
 						    $.each([1, 2, 3, 5, 10, 15], function() {
-								sketchTools.append("<a href='#frame_sketch_" + record.id + "' data-size='" + this + "' style='background: #ccc'>" + this + "</a> ");
+								sketchTools.append($("<a href='#frame_sketch_" + record.id + "' data-size='" + this + "' style='background: #ccc'>" + this + "</a> ").addClass('PaintSize').attr('id', 'paintSize' + this).click(function(){
+									$('a.PaintSize', sketchTools).removeClass('Active');
+									$(this).addClass('Active');
+								}));
 						    });
-					
+
+							
 							var layers = $('<div />').addClass('LayersContainer');
 								
 							layers.bringToTop = function(layerId) {
@@ -261,12 +268,21 @@ $(function() {
 										layers.bringToTop($(ui.tab).attr('href') + '_layer');
 									}
 								})
+								.mouseover(function() {
+									characterLayer.click()
+								});
 							
 							PC.canvasId++;
 							var flatBg = $('<canvas />').attr({id: 'flatBg' + PC.canvasId, width: 500, height: 500}).addClass('Layer'); 
 														
 							var characters = {
+								models: [],
 								add: function(character) {
+									var dragStop = function(evt, ui) {
+										character.xpos = Math.floor($('img', character.view).offset().left - characterLayer.offset().left); 
+										character.ypos = Math.floor($('img', character.view).offset().top - characterLayer.offset().top);
+									};
+									
 									character.view = $('<div />')
 										.addClass('PlacedCharacter')
 										.append($('<br />'),$('<img />').attr({
@@ -282,19 +298,28 @@ $(function() {
 											left: character.xpos + 'px',
 											top: character.ypos + 'px'
 										})
-										.draggable()
+										.draggable({stop: dragStop})
 										.click(function(evt){ 
 											evt.stopPropagation();
 											
-											$('.PlacedCharacter').transformable('destroy');
+											$('.PlacedCharacter').transformable('destroy').draggable();
 																				
 											$(this).transformable({
 												skew: function() { return false },
-												scale: function(evt, ui) { ui.scalex = ui.scaley }
+												scale: function(evt, ui) { ui.scalex = ui.scaley }, 
+												scaleStop: function(evt, ui) { 
+													character.value.scale = {x: ui.scalex, y: ui.scaley};
+												}, 
+												rotateStop: function(evt, ui) {
+													character.value.angle = ui.angle;
+													character.value.center = ui.center;
+												}
 											});
-										})
+										});
 									
+									characters.models.push(character);
 									characterLayer.append(character.view);
+									dragStop();
 								}
 							};
 							
@@ -309,13 +334,18 @@ $(function() {
 											ypos: Math.floor(ui.offset.top - characterLayer.offset().top), 
 											width: ui.helper.width(),
 											height: ui.helper.height(),
-											value: {src: ui.helper.attr('src')}
+											value: {
+												src: ui.helper.attr('src'), 
+												angle: {rad: 0, deg: 0}, 
+												scale: {x: 1, y: 1}, 
+												center: {left: 0, top: 0}
+											}
 										});
 									}
 								})
 								.click(function(){
-									$('.PlacedCharacter').transformable('destroy');
-								})
+									$('.PlacedCharacter').transformable('destroy').draggable()
+								});
 							
 							layers.append(eventLayer, flatBg);
 							
@@ -377,20 +407,44 @@ $(function() {
 										});
 										
 										components.tabs('select', 1);
-										
+										$('a.PaintColor').last().prev().click(); 
+										$('#paintSize3').click();
 									},
 									buttons: {
 										Cancel: function() {
 											$(this).dialog('close');
 										}, 
 										Save: function() {
+											var create = [];
+											var update = [];
+											
+											if(characters.models.length) {
+												$.each(characters.models, function(i, m) {
+													artisan.drawImage('flatBg' + PC.canvasId, m.value.src, m.xpos, m.ypos, m.width * m.value.scale.x, m.height * m.value.scale.y, m.value.angle.deg, m.value.center);
+													var rec = {
+														frame_id: record.id,
+														xpos: m.xpos, 
+														ypos: m.ypos,
+														width: m.width,
+														height: m.height,
+														layer: 3, 
+														type: 'character',
+														value: m.value
+													};
+													
+													if(m.id) {
+														rec.id = m.id;
+														update.push(rec);
+													} else {
+														create.push(rec);
+													}
+												})
+											}
+
 											var png = artisan.convertTo.PNG('flatBg' + PC.canvasId); 
 											
 											frame
 												.attr('src', png);
-
-											var create = [];											
-											var update = [];
 
 											var options = {
 												frame_id: record.id,
@@ -649,6 +703,32 @@ $(function() {
 				draggable: false
 			});
 			
+		var getFrame = function(frameId) {
+			api.Frame.getById(frameId, function(result) {
+				$('.PreviewInner').html($('<img />').attr('src', '/assets/' + result.id + '/frame.png'));
+				$.each(result.assets, function(i, asset){
+					if(asset.type == 'event') {
+						$('.PreviewInner').append($('<div />')
+							.css({
+								cursor: 'pointer', 
+								position: 'absolute', 
+								left: asset.xpos + 'px',
+								top: asset.ypos + 'px',
+								width: asset.width + 'px',
+								height: asset.height + 'px', 
+								border: '1px dashed #aaa'
+						
+							})
+							.click(function(){
+								$('.PreviewInner').html('');
+								getFrame(asset.value.choice);
+							}))
+					}
+				})
+			})
+		};
+		
+		getFrame($('#startingFrameCombo').val());
 	});
 	
 	$('#shareButton').button();
