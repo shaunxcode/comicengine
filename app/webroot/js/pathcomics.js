@@ -260,15 +260,16 @@ $(function() {
 									select: function(evt, ui) {
 										layers.bringToTop($(ui.tab).attr('href') + '_layer');
 									}
-								}).tabs('select', 0); 
+								})
 							
 							PC.canvasId++;
 							var flatBg = $('<canvas />').attr({id: 'flatBg' + PC.canvasId, width: 500, height: 500}).addClass('Layer'); 
-							
+														
 							var characters = {
 								add: function(character) {
 									character.view = $('<div />')
-										.append($('<img />').attr({
+										.addClass('PlacedCharacter')
+										.append($('<br />'),$('<img />').attr({
 											src: character.value.src,
 											width: character.width,
 											height: character.height}))
@@ -277,17 +278,21 @@ $(function() {
 											zIndex: 800, 
 											background: 'transparent',
 											width: (character.width + 20) +  'px',
-											height: (character.height ) + 'px',
+											height: (character.height + 20) + 'px',
 											left: character.xpos + 'px',
 											top: character.ypos + 'px'
 										})
 										.draggable()
-										.transformable({
-											skew: function() { return false },
-											scale: function(evt, ui) { ui.scalex = ui.scaley },
-											scaleStart: function(evt, ui) { console.log('yo'); console.log(ui); },
-											scaleStop: function(evt, ui) { console.log('bro'); console.log(ui); }
-										});
+										.click(function(evt){ 
+											evt.stopPropagation();
+											
+											$('.PlacedCharacter').transformable('destroy');
+																				
+											$(this).transformable({
+												skew: function() { return false },
+												scale: function(evt, ui) { ui.scalex = ui.scaley }
+											});
+										})
 									
 									characterLayer.append(character.view);
 								}
@@ -307,11 +312,15 @@ $(function() {
 											value: {src: ui.helper.attr('src')}
 										});
 									}
-								});
+								})
+								.click(function(){
+									$('.PlacedCharacter').transformable('destroy');
+								})
 							
 							layers.append(eventLayer, flatBg);
 							
 							layers.append(backgroundLayer, characterLayer);
+							
 							
 							var frameEditorDialog = $('<div />')
 								.append(components, layers)
@@ -352,7 +361,7 @@ $(function() {
 														value: asset.value[type]
 													});
 												}
-											})
+											});
 										}
 										
 										$.each(['breadwig', 'spiderman', 'elephant'], function(i, char) {
@@ -365,7 +374,9 @@ $(function() {
 											})
 											.data('type', 'character')
 											.addClass('Character'))
-										})
+										});
+										
+										components.tabs('select', 1);
 										
 									},
 									buttons: {
